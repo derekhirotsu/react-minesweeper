@@ -1,8 +1,5 @@
 import logo from './logo.svg';
 import './App.css';
-import Board from './Board';
-
-
 
 function App() {
   return (
@@ -21,7 +18,6 @@ function App() {
           Learn React
         </a>
       </header>
-      <Board rows={3} columns={3} />
     </div>
   );
 }
