@@ -4,13 +4,13 @@ import Cell from './Cell';
 const testCells = Array(9).fill(null).map((e, i) => (createCellData(i)));
 
 const testCells2 = [
-  { state: 0, hasBomb: false, index: 0 },
-  { state: 0, hasBomb: true, index: 1 },
+  { state: 0, hasBomb: true, index: 0 },
+  { state: 0, hasBomb: false, index: 1 },
   { state: 0, hasBomb: false, index: 2 },
-  { state: 0, hasBomb: true, index: 3 },
-  { state: 0, hasBomb: true, index: 4 },
+  { state: 0, hasBomb: false, index: 3 },
+  { state: 0, hasBomb: false, index: 4 },
   { state: 0, hasBomb: false, index: 5 },
-  { state: 0, hasBomb: true, index: 6 },
+  { state: 0, hasBomb: false, index: 6 },
   { state: 0, hasBomb: false, index: 7 },
   { state: 0, hasBomb: false, index: 8 },
   
@@ -25,6 +25,7 @@ export default function Board({ rows, columns }) {
 
   function handleClick(i) {
     const nextCells = cells.slice();
+    console.log(nextCells);
     const cellData = nextCells[i];
 
     if (cellData.state === 2 || cellData.state === 1) {
@@ -32,6 +33,15 @@ export default function Board({ rows, columns }) {
     }
     nextCells[i].state = 1;
     setCells(nextCells);
+
+    // TODO: recursively setting state isn't great. Find all cells to update (recursively?) then update state once
+    if (getAdjacentBombNumber(i) === 0 && !cellData.hasBomb) {
+      const ad = getAdjacentCells(i);
+      console.log(ad)
+      for (let j = 0; j < ad.length; j++) {
+        handleClick(ad[j].index);
+      }
+    }
   }
 
   function handleRightClick(event, i) {
@@ -57,7 +67,7 @@ export default function Board({ rows, columns }) {
     let value = "-";
 
     if (cellData.state === 1) {
-      value = "#";
+      value = cellData.hasBomb ? "*" : "" + getAdjacentBombNumber(i);
     } else if (cellData.state === 2) {
       value = "F";
     }
@@ -77,38 +87,84 @@ export default function Board({ rows, columns }) {
     );
   }
 
-  function getAdjacentBombNumber(i) {
-    // edge cases for getting adjacent cells
-    if (i < columns && i % columns === 0) {
-      // top left corner
-      const adjCells = [cells[i + 1], cells[columns], cells[columns + 1]];
-      console.log(adjCells);
-      const numAdj = numberOfBombsInCells(adjCells);
-      console.log(numAdj);
-      return "top left";
-    } else if (i < columns && (i + 1) % columns === 0) {
-      // top right corner
-      return "top right";
-    } else if (i >= cells.length - columns && i % columns === 0) {
-      // bottom left corner
-      return "bottom left";
-    } else if (i > cells.length - columns && (i + 1) % columns === 0) {
-      // bottom right corner
-      return "bottom right";
-    } else if (i < columns) {
-      // top row
-      return "top";
-    } else if (i > cells.length - columns) {
-      // bottom row
-      return "bottom";
-    } else if (i % columns === 0) {
-      // left most column
-      return "left";
-    } else if ((i + 1) % columns === 0) {
-      // right most column
-      return "right";
+  function isCellInTopRow(cellIndex) {
+    return cellIndex < columns;
+  }
+
+  function isCellInBottomRow(cellIndex) {
+    return cellIndex >= cells.length - columns;
+  }
+
+  function isCellInLeftColumn(cellIndex) {
+    return cellIndex % columns === 0;
+  }
+
+  function isCellInRightColumn(cellIndex) {
+    return (cellIndex + 1) % columns === 0;
+  }
+
+  function isCellTopLeft(cellIndex) {
+    return isCellInTopRow(cellIndex) && isCellInLeftColumn(cellIndex);
+  }
+
+  function isCellTopRight(cellIndex) {
+    return isCellInTopRow(cellIndex) && isCellInRightColumn(cellIndex);
+  }
+
+  function isCellBottomLeft(cellIndex) {
+    return isCellInBottomRow(cellIndex) && isCellInLeftColumn(cellIndex);
+  }
+
+  function isCellBottomRight(cellIndex) {
+    return isCellInBottomRow(cellIndex) && isCellInRightColumn(cellIndex);
+  }
+
+  function getAdjacentCells(i) {
+    const leftIndex = i - 1;
+    const rightIndex = i + 1;
+    const topIndex = i - columns;
+    const bottomIndex = i + columns;
+    const topLeftIndex = i - columns - 1;
+    const topRightIndex = i - columns + 1;
+    const bottomLeftIndex = i + columns - 1;
+    const bottomRightIndex = i + columns + 1;
+
+    let adjacentCellIndices = [];
+
+    if (isCellTopLeft(i)) {
+      adjacentCellIndices = [rightIndex, bottomIndex, bottomRightIndex];
+    } else if (isCellTopRight(i)) {
+      adjacentCellIndices = [leftIndex, bottomLeftIndex, bottomIndex];
+    } else if (isCellBottomLeft(i)) {
+      adjacentCellIndices = [topIndex, topRightIndex, rightIndex];
+    } else if (isCellBottomRight(i)) {
+      adjacentCellIndices = [leftIndex, topLeftIndex, topIndex];
+    } else if (isCellInTopRow(i)) {
+      adjacentCellIndices = [leftIndex, bottomLeftIndex, bottomIndex, bottomRightIndex, rightIndex];
+    } else if (isCellInBottomRow(i)) {
+      adjacentCellIndices = [leftIndex, topLeftIndex, topIndex, topRightIndex, rightIndex];
+    } else if (isCellInLeftColumn(i)) {
+      adjacentCellIndices = [topIndex, topRightIndex, rightIndex, bottomRightIndex, bottomIndex];
+    } else if (isCellInRightColumn(i)) {
+      adjacentCellIndices = [topIndex, topLeftIndex, leftIndex, bottomLeftIndex, bottomIndex];
+    } else {
+      adjacentCellIndices = [
+        leftIndex,
+        rightIndex,
+        topIndex,
+        bottomIndex,
+        topLeftIndex,
+        topRightIndex,
+        bottomLeftIndex,
+        bottomRightIndex
+      ];
     }
-    return "middle"
+
+    return adjacentCellIndices.map(value => cells[value]);
+  }
+
+  function getAdjacentBombNumber(i) {
+    return numberOfBombsInCells(getAdjacentCells(i));
   }
 
   const r = [];
@@ -120,7 +176,6 @@ export default function Board({ rows, columns }) {
     for (let j = 0; j < columns; j++) {
       const cellIndex = (i * rows) + j;
       const cellValue = getCellValue(cellIndex);
-      const cn = getAdjacentBombNumber(cellIndex);
       c.push(
         <Cell
           // cn={cn}
