@@ -4,20 +4,20 @@ import Cell from './Cell';
 const testCells = Array(9).fill(null).map((e, i) => (createCellData(i)));
 
 const testCells2 = [
-  { state: 0, hasBomb: true, index: 0 },
-  { state: 0, hasBomb: false, index: 1 },
-  { state: 0, hasBomb: false, index: 2 },
-  { state: 0, hasBomb: false, index: 3 },
-  { state: 0, hasBomb: false, index: 4 },
-  { state: 0, hasBomb: false, index: 5 },
-  { state: 0, hasBomb: false, index: 6 },
-  { state: 0, hasBomb: false, index: 7 },
-  { state: 0, hasBomb: false, index: 8 },
+  { state: 0, hasMine: true, index: 0 },
+  { state: 0, hasMine: false, index: 1 },
+  { state: 0, hasMine: false, index: 2 },
+  { state: 0, hasMine: false, index: 3 },
+  { state: 0, hasMine: false, index: 4 },
+  { state: 0, hasMine: false, index: 5 },
+  { state: 0, hasMine: false, index: 6 },
+  { state: 0, hasMine: false, index: 7 },
+  { state: 0, hasMine: false, index: 8 },
   
 ];
 
 function createCellData(i) {
-  return { state: 0, hasBomb: false, index: i };
+  return { state: 0, hasMine: false, index: i };
 }
 
 export default function Board({ rows, columns }) {
@@ -35,7 +35,7 @@ export default function Board({ rows, columns }) {
     setCells(nextCells);
 
     // TODO: recursively setting state isn't great. Find all cells to update (recursively?) then update state once
-    if (getAdjacentBombNumber(i) === 0 && !cellData.hasBomb) {
+    if (getAdjacentMineNumber(i) === 0 && !cellData.hasMine) {
       const ad = getAdjacentCells(i);
       console.log(ad)
       for (let j = 0; j < ad.length; j++) {
@@ -67,7 +67,7 @@ export default function Board({ rows, columns }) {
     let value = "-";
 
     if (cellData.state === 1) {
-      value = cellData.hasBomb ? "*" : "" + getAdjacentBombNumber(i);
+      value = cellData.hasMine ? "*" : "" + getAdjacentMineNumber(i);
     } else if (cellData.state === 2) {
       value = "F";
     }
@@ -75,10 +75,10 @@ export default function Board({ rows, columns }) {
     return value;
   }
 
-  function numberOfBombsInCells(cellsToCheck) {
+  function numberOfMinesInCells(cellsToCheck) {
     return cellsToCheck.reduce(
       (numFound, currentCell) => {
-        if (currentCell.hasBomb) {
+        if (currentCell.hasMine) {
           return numFound + 1;
         }
         return numFound;
@@ -163,8 +163,8 @@ export default function Board({ rows, columns }) {
     return adjacentCellIndices.map(value => cells[value]);
   }
 
-  function getAdjacentBombNumber(i) {
-    return numberOfBombsInCells(getAdjacentCells(i));
+  function getAdjacentMineNumber(i) {
+    return numberOfMinesInCells(getAdjacentCells(i));
   }
 
   const r = [];
